@@ -186,6 +186,15 @@ PokemonNode *removeNodeBST(PokemonNode *root, int id);
  */
 PokemonNode *removePokemonByID(PokemonNode *root, int id);
 
+/**
+ * @brief Merge two binary search trees into one.
+ * @param root1 Root of the first BST (destination).
+ * @param root2 Root of the second BST (source).
+ * @return The merged BST root.
+ * Why we made it: Allows merging two Pokedexes into one.
+ */
+PokemonNode *mergeBST(PokemonNode *root1, PokemonNode *root2);
+
 /* ------------------------------------------------------------
    4) Generic BST Traversals (Function Pointers)
    ------------------------------------------------------------ */
@@ -427,7 +436,6 @@ void deletePokedex(void);
  * Why we made it: BFS copy demonstration plus removing an owner.
  */
 void mergePokedexMenu(void);
-
 /* ------------------------------------------------------------
    11) Printing Owners in a Circle
    ------------------------------------------------------------ */

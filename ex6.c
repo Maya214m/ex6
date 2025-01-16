@@ -6,28 +6,16 @@
 
 # define INT_BUFFER 128
 
-// ================================================
-// Basic struct definitions from ex6.h assumed:
-//   PokemonData { int id; char *name; PokemonType TYPE; int hp; int attack; EvolutionStatus CAN_EVOLVE; }
-//   PokemonNode { PokemonData* data; PokemonNode* left, *right; }
-//   OwnerNode   { char* ownerName; PokemonNode* pokedexRoot; OwnerNode *next, *prev; }
-//   OwnerNode* ownerHead;
-//   const PokemonData pokedex[];
-// ================================================
-
 // --------------------------------------------------------------
 // 1) Safe integer reading
 // --------------------------------------------------------------
-
-void trimWhitespace(char *str)
-{
+void trimWhitespace(char *str) {
     // Remove leading spaces/tabs/\r
     int start = 0;
     while (str[start] == ' ' || str[start] == '\t' || str[start] == '\r')
         start++;
 
-    if (start > 0)
-    {
+    if (start > 0) {
         int idx = 0;
         while (str[start])
             str[idx++] = str[start++];
@@ -36,45 +24,37 @@ void trimWhitespace(char *str)
 
     // Remove trailing spaces/tabs/\r
     int len = (int)strlen(str);
-    while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t' || str[len - 1] == '\r'))
-    {
+    while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t' || str[len - 1] == '\r')) {
         str[--len] = '\0';
     }
 }
 
-char *myStrdup(const char *src)
-{
+char *myStrdup(const char *src) {
     if (!src)
         return NULL;
     size_t len = strlen(src);
     char *dest = (char *)malloc(len + 1);
-    if (!dest)
-    {
+    if (!dest) {
         printf("Memory allocation failed in myStrdup.\n");
         return NULL;
     }
     strcpy(dest, src);
     return dest;
 }
-
-int readIntSafe(const char *prompt)
-{
+int readIntSafe(const char *prompt) {
     char buffer[INT_BUFFER];
     int value;
     int success = 0;
 
-    while (!success)
-    {
+    while (!success) {
         printf("%s", prompt);
 
         // If we fail to read, treat it as invalid
-        if (!fgets(buffer, sizeof(buffer), stdin))
-        {
+        if (!fgets(buffer, sizeof(buffer), stdin)) {
             printf("Invalid input.\n");
             clearerr(stdin);
             continue;
         }
-
         // 1) Strip any trailing \r or \n
         //    so "123\r\n" becomes "123"
         size_t len = strlen(buffer);
@@ -84,8 +64,7 @@ int readIntSafe(const char *prompt)
             buffer[--len] = '\0';
 
         // 2) Check if empty after stripping
-        if (len == 0)
-        {
+        if (len == 0) {
             printf("Invalid input.\n");
             continue;
         }
@@ -96,12 +75,9 @@ int readIntSafe(const char *prompt)
 
         // If endptr didn't point to the end => leftover chars => invalid
         // or if buffer was something non-numeric
-        if (*endptr != '\0')
-        {
+        if (*endptr != '\0') {
             printf("Invalid input.\n");
-        }
-        else
-        {
+        } else {
             // We got a valid integer
             success = 1;
         }
@@ -243,23 +219,69 @@ void displayMenu(OwnerNode *owner)
         printf("Invalid choice.\n");
     }
 }
+// Queue that expends as needed
+Queue *createQueue(int initialCapacity) {
+    Queue *queue = malloc(sizeof(Queue));
+    if (!queue) {
+        fprintf(stderr, "Queue allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    queue->data = malloc(initialCapacity * sizeof(PokemonNode *));
+    if (!queue->data) {
+        fprintf(stderr, "Queue data allocation failed.\n");
+        free(queue);
+        exit(EXIT_FAILURE);
+    }
+    queue->front = 0;
+    queue->rear = 0;
+    queue->capacity = initialCapacity;
+    return queue;
+}
+
+void enqueue(Queue *queue, PokemonNode *node) {
+    if (queue->rear >= queue->capacity) {
+        queue->capacity *= 2;
+        queue->data = realloc(queue->data, queue->capacity * sizeof(PokemonNode *));
+        if (!queue->data) {
+            fprintf(stderr, "Queue resizing failed.\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    queue->data[queue->rear++] = node;
+}
+
+PokemonNode *dequeue(Queue *queue) {
+    if (queue->front == queue->rear) {
+        return NULL; // Queue is empty
+    }
+    return queue->data[queue->front++];
+}
+
+int isQueueEmpty(Queue *queue) {
+    return queue->front == queue->rear;
+}
+
+void freeQueue(Queue *queue) {
+    free(queue->data);
+    free(queue);
+}
 // Function BFSGeneric
 void BFSGeneric(PokemonNode *root, VisitNodeFunc visit) {
     if (!root) return;
-    // Use a simple queue for BFS
-    PokemonNode **queue = malloc(1000 * sizeof(PokemonNode *));
-    int front = 0, rear = 0;
-    // Start with the root
-    queue[rear++] = root;
-    while (front < rear) {
-        PokemonNode *current = queue[front++];
+    // Create a dynamic queue
+    Queue *queue = createQueue(10);
+    enqueue(queue, root);
+    while (!isQueueEmpty(queue)) {
+        PokemonNode *current = dequeue(queue);
         visit(current);
-        if (current->left)
-            queue[rear++] = current->left;
-        if (current->right)
-            queue[rear++] = current->right;
+        if (current->left) {
+            enqueue(queue, current->left);
+        }
+        if (current->right) {
+            enqueue(queue, current->right);
+        }
     }
-    free(queue);
+    freeQueue(queue);
 }
 // Function preOrderGeneric
 void preOrderGeneric(PokemonNode *root, VisitNodeFunc visit) {
@@ -284,7 +306,6 @@ void postOrderGeneric(PokemonNode *root, VisitNodeFunc visit) {
 }
 // Function displayBFS
 void displayBFS(PokemonNode *root) {
-    printf("BFS (Level-Order):\n");
     BFSGeneric(root, printPokemonNode);
 }
 // Function preOrderTraversal
@@ -479,20 +500,20 @@ OwnerNode *createOwner(char *ownerName, PokemonNode *starter) {
 // Search Pokemon BFS
 PokemonNode *searchPokemonBFS(PokemonNode *root, int id) {
     if (!root) return NULL;
-    PokemonNode **queue = (PokemonNode **)malloc(100 * sizeof(PokemonNode *));
-    int front = 0, rear = 0;
-    queue[rear++] = root;
-    while (front < rear) {
-        PokemonNode *current = queue[front++];
+    Queue *queue = createQueue(10);
+    enqueue(queue, root);
+    PokemonNode *found = NULL;
+    while (!isQueueEmpty(queue)) {
+        PokemonNode *current = dequeue(queue);
         if (current->data->id == id) {
-            free(queue);
-            return current;
+            found = current;
+            break;
         }
-        if (current->left) queue[rear++] = current->left;
-        if (current->right) queue[rear++] = current->right;
+        if (current->left) enqueue(queue, current->left);
+        if (current->right) enqueue(queue, current->right);
     }
-    free(queue);
-    return NULL;
+    freeQueue(queue);
+    return found;
 }
 // Remove owner from circular list
 void removeOwnerFromCircularList(OwnerNode *target) {
@@ -580,7 +601,7 @@ void openPokedexMenu() {
 // --------------------------------------------------------------
 void enterExistingPokedexMenu() {
     if (!ownerHead) {
-        printf("No Pokedexes exist.\n");
+        printf("No existing Pokedexes.\n");
         return;
     }
     // Display all existing Pokedex owners
@@ -675,7 +696,7 @@ void addPokemon(OwnerNode *owner) {
 // Function freePokemon
 void freePokemon(OwnerNode *owner) {
     if (!owner || !owner->pokedexRoot) {
-        printf("No Pokemon to release.\n");
+        printf("No existing Pokemon to release.\n");
         return;
     }
     printf("Enter ID to release: ");
@@ -753,7 +774,7 @@ void evolvePokemon(OwnerNode *owner) {
 // Function to delete a Pokedex
 void deletePokedex() {
     if (!ownerHead) {
-        printf("No Pokedexes to delete.\n");
+        printf("No existing Pokedexes to delete.\n");
         return;
     }
 
@@ -834,7 +855,7 @@ PokemonNode *mergeBST(PokemonNode *root1, PokemonNode *root2) {
 // Function to sort owners by name
 void sortOwners() {
     if (!ownerHead || ownerHead->next == ownerHead) {
-        printf("Not enough owners to sort.\n");
+        printf("0 or 1 owners only => no need to sort.\n");
         return;
     }
     int swapped;
@@ -857,7 +878,7 @@ void sortOwners() {
 // Function for Print Owners in a direction X times
 void printOwnersCircular() {
     if (!ownerHead) {
-        printf("No owners to display.\n");
+        printf("No owners.\n");
         return;
     }
     // Prompt user for direction
@@ -908,7 +929,6 @@ void mainMenu()
         printf("6. Print Owners in a direction X times\n");
         printf("7. Exit\n");
         choice = readIntSafe("Your choice: ");
-
         switch (choice)
         {
         case 1:
@@ -936,6 +956,7 @@ void mainMenu()
             printf("Invalid.\n");
         }
     } while (choice != 7);
+    getchar();
 }
 
 int main()

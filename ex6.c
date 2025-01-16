@@ -365,6 +365,13 @@ int compareByNameNode(const void *a, const void *b) {
     PokemonNode *nodeB = *(PokemonNode **)b;
     return strcmp(nodeA->data->name, nodeB->data->name);
 }
+// Function related to sorOwners function
+int compareOwnerNames(const void *a, const void *b) {
+    OwnerNode *ownerA = *(OwnerNode **)a;
+    OwnerNode *ownerB = *(OwnerNode **)b;
+
+    return strcmp(ownerA->ownerName, ownerB->ownerName);
+}
 // Function createPokemonNode
 PokemonNode *createPokemonNode(const PokemonData *data) {
     PokemonNode *node = malloc(sizeof(PokemonNode));
@@ -527,16 +534,6 @@ void removeOwnerFromCircularList(OwnerNode *target) {
         }
     }
     freeOwnerNode(target);
-}
-// Swap Owner Data
-void swapOwnerData(OwnerNode *a, OwnerNode *b) {
-    if (!a || !b) return;
-    char *tempName = a->ownerName;
-    a->ownerName = b->ownerName;
-    b->ownerName = tempName;
-    PokemonNode *tempPokedex = a->pokedexRoot;
-    a->pokedexRoot = b->pokedexRoot;
-    b->pokedexRoot = tempPokedex;
 }
 // Function for adding new Pokedex
 void openPokedexMenu() {
@@ -854,25 +851,51 @@ PokemonNode *mergeBST(PokemonNode *root1, PokemonNode *root2) {
 // Function to sort owners by name
 void sortOwners() {
     if (!ownerHead || ownerHead->next == ownerHead) {
+        // No sorting needed for 0 or 1 owners
         printf("0 or 1 owners only => no need to sort.\n");
         return;
     }
-    int swapped;
+
+    // Step 1: Convert the circular linked list to an array
+    int size = 0;
+    OwnerNode *current = ownerHead;
+
+    // Count the number of owners
     do {
-        swapped = 0;
-        OwnerNode *current = ownerHead;
+        size++;
+        current = current->next;
+    } while (current != ownerHead);
 
-        do {
-            OwnerNode *next = current->next;
-            if (strcmp(current->ownerName, next->ownerName) > 0) {
-                swapOwnerData(current, next);
-                swapped = 1;
-            }
-            current = next;
-        } while (current != ownerHead);
-    } while (swapped);
+    // Allocate memory for the array
+    OwnerNode **ownerArray = malloc(size * sizeof(OwnerNode *));
+    if (!ownerArray) {
+        printf("Memory allocation failed.\n");
+        return;
+    }
 
-    printf("Owners sorted successfully.\n");
+    // Populate the array with pointers to OwnerNodes
+    current = ownerHead;
+    for (int i = 0; i < size; i++) {
+        ownerArray[i] = current;
+        current = current->next;
+    }
+
+    // Step 2: Sort the array by ownerName using qsort
+    qsort(ownerArray, size, sizeof(OwnerNode *), compareOwnerNames);
+
+    // Step 3: Reconstruct the circular linked list from the sorted array
+    for (int i = 0; i < size; i++) {
+        ownerArray[i]->next = ownerArray[(i + 1) % size]; // Point to the next node
+        ownerArray[i]->prev = ownerArray[(i - 1 + size) % size]; // Point to the previous node
+    }
+
+    // Update the head of the list
+    ownerHead = ownerArray[0];
+
+    // Free the array memory
+    free(ownerArray);
+
+    printf("Owners sorted by name.\n");
 }
 // Function for Print Owners in a direction X times
 void printOwnersCircular() {
@@ -880,35 +903,36 @@ void printOwnersCircular() {
         printf("No owners.\n");
         return;
     }
-    // Prompt user for direction
-    printf("Enter direction (F or B): ");
-    char *directionInput = getDynamicInput();
-    if (!directionInput) {
-        printf("Failed to read direction input.\n");
-        return;
+    char *directionInput = NULL;
+    int prints;
+    while (1) {
+        // Prompt user for direction
+        printf("Enter direction (F or B): ");
+        directionInput = getDynamicInput();
+        if (directionInput == NULL || (toupper(directionInput[0]) != 'F' && toupper(directionInput[0]) != 'B')) {
+            printf("Invalid direction, must be F or B.\n");
+            free(directionInput);
+            continue; // Let the user try again
+        }
+        // Prompt user for number of prints
+        prints = readIntSafe("How many prints? ");
+        if (prints <= 0) {
+            printf("Invalid number. Number of prints must be positive.\n");
+            free(directionInput);
+            continue;
+        }
+        // If both inputs are valid, break out of the loop
+        break;
     }
-    // Validate and process direction input
-    char direction = directionInput[0]; // Check only the first character
-    if (direction != 'f' && direction != 'F' && direction != 'b' && direction != 'B') {
-        printf("Invalid direction. Enter F for forward or B for backward.\n");
-        return;
-    }
-    if (directionInput[0] == 'f' || directionInput[0] == 'F') direction = 'F';
-    if (directionInput[0] == 'b' || directionInput[0] == 'B') direction = 'B';
+    // Normalize the direction
+    char direction = toupper(directionInput[0]);
     free(directionInput);
-    // Prompt user for number of prints
-    printf("How many prints? ");
-    int prints = readIntSafe("");
-    if (prints <= 0) {
-        printf("Number of prints must be positive.\n");
-        return;
-    }
     // Traverse and print owners in the specified direction
     OwnerNode *current = ownerHead;
     printf("\n");
     for (int i = 1; i <= prints; i++) {
         printf("[%d] %s\n", i, current->ownerName);
-        current = (direction == 'F') ? current->next : current->prev; // Move forward or backward
+        current = (direction == 'F' ? current->next : current->prev);
     }
 }
 // --------------------------------------------------------------

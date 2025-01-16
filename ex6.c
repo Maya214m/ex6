@@ -632,7 +632,7 @@ void enterExistingPokedexMenu() {
         printf("3. Release Pokemon (by ID)\n");
         printf("4. Pokemon Fight!\n");
         printf("5. Evolve Pokemon\n");
-        printf("6. Back to Main Menu\n");
+        printf("6. Back to Main\n");
 
         subChoice = readIntSafe("Your choice: ");
 
@@ -653,7 +653,7 @@ void enterExistingPokedexMenu() {
                 evolvePokemon(cur);
             break;
             case 6:
-                printf("Back to main menu.\n");
+                printf("Back to Main Menu.\n");
             break;
             default:
                 printf("Invalid choice.\n");
@@ -692,7 +692,7 @@ void addPokemon(OwnerNode *owner) {
 // Function freePokemon
 void freePokemon(OwnerNode *owner) {
     if (!owner || !owner->pokedexRoot) {
-        printf("No existing Pokemon to release.\n");
+        printf("No Pokemon to release.\n");
         return;
     }
     printf("Enter Pokemon ID to release: ");
@@ -712,9 +712,9 @@ void pokemonFight(OwnerNode *owner) {
         printf("Pokedex is empty.\n");
         return;
     }
-    printf("Enter ID of the first Pokemon: \n");
+    printf("Enter ID of the first Pokemon: ");
     int id1 = readIntSafe("");
-    printf("Enter ID of the second Pokemon: \n");
+    printf("Enter ID of the second Pokemon: ");
     int id2 = readIntSafe("");
     // Check if both Pokemon exist in the owner's pokedex
     PokemonNode *pokemon1 = searchPokemonBFS(owner->pokedexRoot, id1);
@@ -726,8 +726,8 @@ void pokemonFight(OwnerNode *owner) {
     // Calculate fight scores
     double score1 = pokemon1->data->attack * 1.5 + pokemon1->data->hp * 1.2;
     double score2 = pokemon2->data->attack * 1.5 + pokemon2->data->hp * 1.2;
-    printf("Pokemon 1: %s (Score = %.2f)\n", pokemon1->data->name, score1);
-    printf("Pokemon 2: %s (Score = %.2f)\n", pokemon2->data->name, score2);
+    printf("Pokemon 1: %s (Score = %.2f)", pokemon1->data->name, score1);
+    printf("Pokemon 2: %s (Score = %.2f)", pokemon2->data->name, score2);
     // Determine winner
     if (score1 > score2) {
         printf("%s wins!\n", pokemon1->data->name);
@@ -929,7 +929,6 @@ void printOwnersCircular() {
     free(directionInput);
     // Traverse and print owners in the specified direction
     OwnerNode *current = ownerHead;
-    printf("\n");
     for (int i = 1; i <= prints; i++) {
         printf("[%d] %s\n", i, current->ownerName);
         current = (direction == 'F' ? current->next : current->prev);

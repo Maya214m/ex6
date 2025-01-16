@@ -726,8 +726,8 @@ void pokemonFight(OwnerNode *owner) {
     // Calculate fight scores
     double score1 = pokemon1->data->attack * 1.5 + pokemon1->data->hp * 1.2;
     double score2 = pokemon2->data->attack * 1.5 + pokemon2->data->hp * 1.2;
-    printf("Pokemon 1: %s (Score = %.2f)", pokemon1->data->name, score1);
-    printf("Pokemon 2: %s (Score = %.2f)", pokemon2->data->name, score2);
+    printf("Pokemon 1: %s (Score = %.2f) ", pokemon1->data->name, score1);
+    printf("Pokemon 2: %s (Score = %.2f) \n", pokemon2->data->name, score2);
     // Determine winner
     if (score1 > score2) {
         printf("%s wins!\n", pokemon1->data->name);

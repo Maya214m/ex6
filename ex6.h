@@ -58,6 +58,17 @@ typedef struct OwnerNode
     struct OwnerNode *next;   // Next owner in the linked list
     struct OwnerNode *prev;   // Previous owner in the linked list
 } OwnerNode;
+// BFS queue
+typedef struct {
+   PokemonNode **data;
+   int front, rear, capacity;
+} Queue;
+// Queue-related functions
+Queue *createQueue(int initialCapacity);
+void enqueue(Queue *queue, PokemonNode *node);
+PokemonNode *dequeue(Queue *queue);
+int isQueueEmpty(Queue *queue);
+void freeQueue(Queue *queue);
 
 // Global head pointer for the linked list of owners
 OwnerNode *ownerHead = NULL;

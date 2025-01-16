@@ -74,12 +74,11 @@ int readIntSafe(const char *prompt) {
         value = (int)strtol(buffer, &endptr, 10);
 
         // If endptr didn't point to the end => leftover chars => invalid
-        // or if buffer was something non-numeric
         if (*endptr != '\0') {
             printf("Invalid input.\n");
         } else {
             // We got a valid integer
-            success = 1;
+           success = 1;
         }
     }
     return value;
@@ -549,7 +548,7 @@ void openPokedexMenu() {
     }
     // Check for duplicate owner names
     if (findOwnerByName(ownerName)) {
-        printf("Owner name '%s' already exists. Please choose a different name.\n", ownerName);
+        printf("Owner '%s' already exists. Not creating a new Pokedex.\n", ownerName);
         free(ownerName);
         return;
     }
@@ -614,7 +613,7 @@ void enterExistingPokedexMenu() {
         cur = cur->next;
     } while (cur != ownerHead);
 
-    printf("\nChose a Pokedex by number: ");
+    printf("Choose a Pokedex by number: ");
     int choice = readIntSafe("");
 
     if (choice < 1 || choice > count) {
@@ -699,17 +698,18 @@ void freePokemon(OwnerNode *owner) {
         printf("No existing Pokemon to release.\n");
         return;
     }
-    printf("Enter ID to release: ");
+    printf("Enter Pokemon ID to release: ");
     int id = readIntSafe("");
     // Use removePokemonByID to handle removal
-    PokemonNode *updatedRoot = removePokemonById(owner->pokedexRoot, id);
-    if (updatedRoot == owner->pokedexRoot) {
-        printf("Pokemon with ID %d not found in the Pokedex.\n", id);
-    } else {
-        owner->pokedexRoot = updatedRoot;
-        printf("Pokemon with ID %d released.\n", id);
+    PokemonNode *targetPokemon = searchPokemonBFS(owner->pokedexRoot, id);
+    if (!targetPokemon) {
+        printf("No Pokemon with ID %d found.\n", id);
+        return;
     }
-}// Function pokemonFight
+        printf("Removing Pokemon %s (ID %d).\n", targetPokemon->data->name, targetPokemon->data->id);
+        owner->pokedexRoot = removePokemonById(owner->pokedexRoot, id);
+    }
+// Function pokemonFight
 void pokemonFight(OwnerNode *owner) {
     if (!owner || !owner->pokedexRoot) {
         printf("Pokedex is empty.\n");
@@ -743,7 +743,7 @@ void pokemonFight(OwnerNode *owner) {
 // Function evolvePokemon
 void evolvePokemon(OwnerNode *owner) {
     if (!owner->pokedexRoot) {
-        printf("Pokedex is empty.\n");
+        printf("Cannot evolve. Pokedex empty.\n");
         return;
     }
     int id = readIntSafe("Enter ID of Pokemon to evolve: \n");
@@ -765,6 +765,7 @@ void evolvePokemon(OwnerNode *owner) {
     // Create new node for the evolved Pokemon
     PokemonNode *newNode = createPokemonNode(&pokedex[newID - 1]);
     owner->pokedexRoot = insertPokemonNode(owner->pokedexRoot, newNode);
+    printf("Removing Pokemon %s (ID %d).\n", node->data->name, id);
 
     printf("Pokemon evolved from %s (ID %d) to %s (ID %d).\n",
            node->data->name, id, newNode->data->name, newID);
@@ -803,7 +804,6 @@ void deletePokedex() {
     // Delete the selected Pokedex
     printf("Deleting %s's entire Pokedex...\n", current->ownerName);
     removeOwnerFromCircularList(current);
-    freeOwnerNode(current);
     printf("Pokedex deleted.\n");
 }
 // Function to merge Pokedex
@@ -831,9 +831,8 @@ void mergePokedexMenu() {
     // Merge secondOwner's Pokedex into firstOwner's Pokedex
     printf("Merging %s and %s...\n", firstOwner->ownerName, secondOwner->ownerName);
     firstOwner->pokedexRoot = mergeBST(firstOwner->pokedexRoot, secondOwner->pokedexRoot);
-    // Remove secondOwner from the circular linked list and free their resources
+    // Remove secondOwner from the circular linked list
     removeOwnerFromCircularList(secondOwner);
-    freeOwnerNode(secondOwner);
 
     printf("Merge completed.\n");
     printf("Owner '%s' has been removed after merging.\n", secondOwnerName);
@@ -956,7 +955,6 @@ void mainMenu()
             printf("Invalid.\n");
         }
     } while (choice != 7);
-    getchar();
 }
 
 int main()

@@ -70,6 +70,8 @@ PokemonNode *dequeue(Queue *queue);
 int isQueueEmpty(Queue *queue);
 void freeQueue(Queue *queue);
 
+// Function related to sortOwners function
+int compareOwnerNames(const void *a, const void *b);
 // Global head pointer for the linked list of owners
 OwnerNode *ownerHead = NULL;
 
@@ -385,14 +387,6 @@ void displayMenu(OwnerNode *owner);
  * Why we made it: Another demonstration of pointer manipulation + sorting logic.
  */
 void sortOwners(void);
-
-/**
- * @brief Helper to swap name & pokedexRoot in two OwnerNode.
- * @param a pointer to first owner
- * @param b pointer to second owner
- * Why we made it: Used internally by bubble sort to swap data.
- */
-void swapOwnerData(OwnerNode *a, OwnerNode *b);
 
 /* ------------------------------------------------------------
    9) Circular List Linking & Searching

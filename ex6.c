@@ -1,3 +1,8 @@
+/*******************
+* Name: Maya Mattar
+* ID: 213510407
+* Assignment: ex6
+******************/
 #include "ex6.h"
 #include <ctype.h>
 #include <stdio.h>
